@@ -1,0 +1,128 @@
+<?php
+
+declare(strict_types = 1);
+
+{% if namespace %}
+    namespace {{ namespace }};
+{% endif %}
+
+use PHPModelGenerator\Exception\JSONModelValidationException;
+use PHPModelGenerator\Interfaces\SerializationInterface;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Throwable;
+
+class {{ entityName }}Controller
+{
+    /** @var {{ repositoryFQCN }} */
+    private $repository;
+
+    public function __construct({{ repositoryFQCN }} $repository)
+    {
+        $this->repository = $repository;
+    }
+
+    public function create(Request $request, Response $response): Response
+    {
+        try {
+            $object = new {{ modelClass }}(json_decode($request->getBody()->getContents(), true));
+        } catch (JSONModelValidationException $exception) {
+            $response->withStatus(400)->getBody()->write($exception->getMessage());
+
+            return $response;
+        }
+
+        try {
+            $object = $this->repository->create($object);
+        } catch (Throwable $throwable) {
+            $response->withStatus($throwable->getCode() ?: 500)->getBody()->write($throwable->getMessage());
+
+            return $response;
+        }
+
+        $response->withStatus(201)->getBody()->write($object->toJSON());
+
+        return $response;
+    }
+
+    public function get($id, Response $response): Response
+    {
+        try {
+            $object = $this->repository->get($id);
+        } catch (Throwable $throwable) {
+            $response->withStatus($throwable->getCode() ?: 500)->getBody()->write($throwable->getMessage());
+
+            return $response;
+        }
+
+        $response->getBody()->write($object->toJSON());
+
+        return $response;
+    }
+
+    public function getAll(Response $response): Response
+    {
+        try {
+            $objects = $this->repository->getAll();
+        } catch (Throwable $throwable) {
+            $response->withStatus($throwable->getCode() ?: 500)->getBody()->write($throwable->getMessage());
+
+            return $response;
+        }
+
+        $response->getBody()->write(
+            json_encode(
+                array_map(
+                    function (SerializationInterface $object) {
+                        return $object->toJSON();
+                    },
+                    $objects
+                )
+            )
+        );
+
+        return $response;
+    }
+
+    public function update($id, Request $request, Response $response): Response
+    {
+        try {
+            $object = $this->repository->get($id);
+        } catch (Throwable $throwable) {
+            $response->withStatus($throwable->getCode() ?: 500)->getBody()->write($throwable->getMessage());
+
+            return $response;
+        }
+
+        try {
+            $object->populate(json_decode($request->getBody()->getContents(), true));
+        } catch (JSONModelValidationException $exception) {
+            $response->withStatus(400)->getBody()->write($exception->getMessage());
+
+            return $response;
+        }
+
+        try {
+            $object = $this->repository->update($object, $id);
+        } catch (Throwable $throwable) {
+            $response->withStatus($throwable->getCode() ?: 500)->getBody()->write($throwable->getMessage());
+
+            return $response;
+        }
+
+        $response->getBody()->write($object->toJSON());
+
+        return $response;
+    }
+
+    public function delete($id, Response $response): Response
+    {
+        try {
+            $this->repository->delete($id);
+        } catch (Throwable $throwable) {
+            $response->withStatus($throwable->getCode() ?: 500)->getBody()->write($throwable->getMessage());
+        }
+
+        return $response;
+    }
+}

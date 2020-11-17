@@ -1,0 +1,48 @@
+<?php
+
+namespace {{ namespace }};
+
+interface {{ entityName }}RepositoryInterface
+{
+    /**
+     * Create a new entity
+     *
+     * @param {{ modelClass }} $entity
+     *
+     * @return {{ modelClass }}
+     */
+    public function create({{ modelClass }} $entity): {{ modelClass }};
+
+    /**
+     * Get a single entity identified by $id
+     *
+     * @param mixed $id
+     *
+     * @return {{ modelClass }}
+     */
+    public function get($id): {{ modelClass }};
+
+    /**
+     * Get a list of all available entities
+     *
+     * @return {{ modelClass }}[]
+     */
+    public function getAll(): array;
+
+    /**
+     * Update an existing entity. The $entity will contain the updated data
+     *
+     * @param {{ modelClass }} $entity
+     * @param mixed $id
+     *
+     * @return {{ modelClass }}
+     */
+    public function update({{ modelClass }} $entity, $id): {{ modelClass }};
+
+    /**
+     * Delete a single entity identified by $id
+     *
+     * @param mixed $id
+     */
+    public function delete($id): void;
+}
